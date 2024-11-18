@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, ScrollView, Button, Text, TextInput, Image, StyleSheet, Dimensions} from 'react-native';
+import {View, ScrollView, Button, Text, TextInput, Image, StyleSheet, Dimensions, useWindowDimensions } from 'react-native';
 import {SpeedoMeterPlus} from 'react-native-speedometer-plus';
 const {initializeApp} = require("firebase/app");
 const {getDatabase, ref, set, onValue} = require("firebase/database");
@@ -25,26 +25,87 @@ export default function MyLayout(){
 
     const ClockLabels = [
         {
+            name: 'Test0',
+            labelColor: '#3b699e',
+            activeBarColor: '#93c2ee',
+          },
+        {
             name: 'Test1',
+            labelColor: '#3b699e',
+            activeBarColor: '#7dacda',
+          },
+
+          {
+            name: 'Test2',
+            labelColor: '#3b699e',
+            activeBarColor: '#6696c6',
+          },
+          {
+            name: 'Test3',
+            labelColor: '#3b699e',
+            activeBarColor: '#507fb2',
+          },
+          {
+            name: 'Test4',
             labelColor: '#3b699e',
             activeBarColor: '#3b699e',
           },
           
           
           
-          
     ]
     const TempLabels = [
         {
+            name: 'Test0',
+            labelColor: '#ff5153',
+            activeBarColor: '#ffd9db',
+          },
+        {
             name: 'Test1',
+            labelColor: '#ff5153',
+            activeBarColor: '#ffb7b9',
+          },
+
+          {
+            name: 'Test2',
+            labelColor: '#ff5153',
+            activeBarColor: '#ff9597',
+          },
+          {
+            name: 'Test3',
+            labelColor: '#ff5153',
+            activeBarColor: '#ff7375',
+          },
+          {
+            name: 'Test4',
             labelColor: '#ff5153',
             activeBarColor: '#ff5153',
           },
-          
     ]
     const PowerLabels = [
         {
+            name: 'Test0',
+            labelColor: '#02a361',
+            activeBarColor: '#cce3dc',
+          },
+        {
             name: 'Test1',
+            labelColor: '#02a361',
+            activeBarColor: '#99d3bd',
+          },
+
+          {
+            name: 'Test2',
+            labelColor: '#02a361',
+            activeBarColor: '#66c39e',
+          },
+          {
+            name: 'Test3',
+            labelColor: '#02a361',
+            activeBarColor: '#33b380',
+          },
+          {
+            name: 'Test4',
             labelColor: '#02a361',
             activeBarColor: '#02a361',
           },
@@ -66,8 +127,18 @@ export default function MyLayout(){
 
     const [defaultPower, setDefaultPower] = useState(0);
     const [OptiPower, setOptiPower] = useState(0);
-    
-    
+    const [defaultPer, setDefaultPer] = useState(0);
+    const [OptiPer, setOptiPer] = useState(0);
+
+    const { width } = useWindowDimensions();
+    const boxSize = width * 0.45; // 박스 너비의 45%를 비율로 설정
+    const chartSize = width * 0.3; // 차트 너비의 80%를 비율로 설정
+    const dynamicMargin = width * 0.05;
+
+    const getBarColor = (index) => {
+        const colors = ['#3b699e', '#02a361']; // 각 막대의 색상
+        return colors[index] || '#000'; // 기본 색상
+      };
 
     useEffect(()=> {
         const firstRef = ref(database, 'firstEpoch')
@@ -77,6 +148,7 @@ export default function MyLayout(){
             const done = data.done
             if (done) {
                 setDefaultPower(parseInt(data.powerDraw * data.epoch))
+                setDefaultPer(parseInt(data.performance * data.epoch))
             }
 
 
@@ -88,6 +160,8 @@ export default function MyLayout(){
             console.log("epoch")
             const data = snapshot.val();
             setOptiPower(prev => prev + data.powerDraw)
+            setOptiPer(prev => prev + data.performance)
+            
         })
 
         const gpuLogsRef = ref(database, 'gpuLogs');
@@ -139,15 +213,15 @@ export default function MyLayout(){
 
         <View style={styles.container}>
             {/* 제목 구역 */}
-            <View style={styles.titleBox}>
-                <Text style={styles.titleText}>GPU Dashboard</Text>
-            </View>
+            
+            <Text style={styles.titleText}>GPU Dashboard</Text>
+            
         {/* 상단 4개의 구역 */}
         <View style={styles.topContainer}>
             <View style={styles.box}>
                 <SpeedoMeterPlus
                                 value={clock}
-                                size={200}  
+                                size={boxSize * 0.233}
                                 minValue={0}
                                 maxValue={3000}
                                 innerLabelNoteValue="CLOCK"
@@ -162,7 +236,7 @@ export default function MyLayout(){
             <View style={styles.box}>
             <SpeedoMeterPlus
                             value={temp}
-                            size={200}
+                            size={boxSize * 0.233}
                             minValue={0}
                             maxValue={100}
                             innerLabelNoteValue="TEMP"
@@ -173,7 +247,7 @@ export default function MyLayout(){
             <View style={styles.box}>
             <SpeedoMeterPlus
                             value={power}
-                            size={200}
+                            size={boxSize * 0.233}
                             minValue={0}
                             maxValue={200}
                             innerLabelNoteValue="POWER"
@@ -182,6 +256,8 @@ export default function MyLayout(){
                         />
             </View>
             <View style={styles.infoBox}>
+                <View style={{'marginLeft':80}}>
+
                 <BarChart
                     data={{
                         labels: ['Default', 'Optimized'], // X축 레이블
@@ -191,8 +267,8 @@ export default function MyLayout(){
                           },
                         ],
                       }}
-                    width={200} // 화면 너비에서 여백을 뺀 값
-                    height={220} // 차트 높이
+                    width={chartSize * 0.4} // 화면 너비에서 여백을 뺀 값
+                    height={chartSize * 0.4} // 차트 높이
                     yAxisLabel="" // Y축 레이블
                     chartConfig={{
                     backgroundColor: '#ffffff', // 배경색
@@ -211,29 +287,52 @@ export default function MyLayout(){
                     },
                     }}
                     style={{
-                    marginVertical: 8,
+                    marginVertical: 7,
                     borderRadius: 16,
                     
                     }}
                     
                     fromZero={true} // 시작점을 0으로 설정
                 />
+                </View>
+
+
+
+
+
                 {/* 수직으로 텍스트 배치 */}
                 <View style={styles.textContainer}>
-                    <Text style={styles.infoText}>Default {defaultPower}W</Text>
-                    <Text>{'\n'}</Text>
-                    <Text>{'\n'}</Text>
-                    <Text style={styles.infoText}>Optimized {parseInt(OptiPower)}W</Text>
+                    <View style={{flexDirection: 'cols', paddingVertical : 0}}>
+                        <Text style={styles.infoText}>{defaultPower}W</Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                            <Text style={{fontSize: 20, 
+                            fontWeight: '100',
+                            color: '#3b699e', marginRight:10}}>Default            </Text>
+                            <Text style={styles.infoTextPer}>{parseInt(defaultPer)}s</Text>
+                        </View>
+                    </View>
+                    <View style={{flexDirection: 'cols', marginBottom:10}}>
+                        <Text style={[styles.infoText, {color:'#02a361'}]}>{parseInt(OptiPower)}W</Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+
+                        <Text style={{fontSize: 20, 
+                        fontWeight: '100',
+                        color: '#02a361', marginRight : 10}}>Optimized       </Text>
+                        <Text style={[styles.infoTextPer, {color:'#02a361'}]}>{parseInt(OptiPer)}s</Text>
+                        </View>
+                    </View>
+                    
                 </View>
             </View>
         </View>
         
         {/* 하단 큰 구역 */}
         <View style={styles.bottomContainer}>
-            <View style={styles.box}>
-                <View style={styles.chartContainer}>
+            <View style={styles.bottomBox}>
+                <Text style={[styles.chartTitle, {color: 'black'}]}>Clock</Text>
+                
+           
                     
-                    <Text style={styles.chartTitle}>Clock</Text>
                         <LineChart
                             data={{
                                 labels: clockChartLen > 20
@@ -246,8 +345,8 @@ export default function MyLayout(){
                                     },
                                 ],
                             }}
-                            width={400} // react-native에서
-                            height={400}
+                            width={chartSize} // react-native에서
+                            height={chartSize * 0.7} 
                             yAxisLabel=""
                             yAxisSuffix=" Hz"
                             chartConfig={{
@@ -269,14 +368,14 @@ export default function MyLayout(){
                                 fillShadowGradientFrom: '#ffffff', // 투명 음영
                                 fillShadowGradientOpacity: 0, // 음영 투명도 0으로 설정
                             }}
-                            style={styles.chartStyle}
+                            fromZero={true}
                         />
-                    
-                </View>
+          
+                
             </View>
-            <View style={styles.box}>
-                <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>Temp</Text>
+            <View style={styles.bottomBox}>
+                <Text style={[styles.chartTitle, {color : 'black'}]}>Temp</Text>
+               
                 <LineChart
                         data={{
                             labels: tempChartLen > 20
@@ -289,8 +388,8 @@ export default function MyLayout(){
                                 },
                             ],
                         }}
-                        width={400} // react-native에서
-                        height={400}
+                        width={chartSize} // react-native에서
+                        height={chartSize*0.7}
                         yAxisLabel=""
                         yAxisSuffix="°C"
                         yAxisInterval={10} // y축 간격 설정 (예: 1)
@@ -312,14 +411,15 @@ export default function MyLayout(){
                             fillShadowGradientFrom: '#ffffff', // 투명 음영
                             fillShadowGradientOpacity: 0, // 음영 투명도 0으로 설정
                         }}
-                        style={styles.chartStyle}
+                        fromZero={true}
                     />
-                </View>    
+               
+                
             </View>
             
-            <View style={styles.box}>
-                <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>Power</Text>
+            <View style={styles.bottomBox}>
+                <Text style={[styles.chartTitle, {color : 'black'}]}>Power</Text>
+                
                     <LineChart
                             data={{
                                 labels: powerChartLen > 20
@@ -332,8 +432,8 @@ export default function MyLayout(){
                                     },
                                 ],
                             }}
-                            width={400} // react-native에서
-                            height={400}
+                            width={chartSize} // react-native에서
+                            height={chartSize*0.7}
                             yAxisLabel=""
                             yAxisSuffix="W"
                             chartConfig={{
@@ -354,12 +454,13 @@ export default function MyLayout(){
                                 fillShadowGradientFrom: '#ffffff', // 투명 음영
                                 fillShadowGradientOpacity: 0, // 음영 투명도 0으로 설정
                             }}
-                            style={styles.chartStyle}
+                            fromZero={true}
                         />
-                </View>
+                
+                
             </View>
-                    
-            <View style={styles.logoBox}></View>
+                            
+            
 
 
         </View>
@@ -369,29 +470,42 @@ export default function MyLayout(){
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#e0e0e0' },
-    titleBox: { paddingVertical: 15, backgroundColor: '#fff', marginBottom: 15, borderRadius: 10, alignItems: 'flex-start', borderTopWidth: 2, // 위쪽 테두리 두께 설정
-        borderTopColor: '#53a3ec',    marginHorizontal: 14,},
-    titleText: { fontSize: 24, fontWeight: 'bold', color: '#3b699e', marginLeft : 10 },
-    topContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-    bottomContainer : {flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20},
-    box: { flex: 1, backgroundColor: '#fff', padding: 15, borderRadius: 10, alignItems: 'center', marginHorizontal: 7, paddingTop: 50,borderTopWidth: 2, // 위쪽 테두리 두께 설정
-        borderTopColor: '#53a3ec',},
-    logoBox:{flex : 0.8, backgroundColor: '#fff', padding: 15, borderRadius: 10, alignItems: 'center', marginHorizontal: 7, paddingTop: 50,borderTopWidth: 2, // 위쪽 테두리 두께 설정
-        borderTopColor: '#53a3ec',},
-    infoBox: { flex: 1.5, backgroundColor: '#fff', borderRadius: 10, padding: 15, alignItems: 'center', marginHorizontal: 5, flexDirection:'row', borderTopWidth: 2, // 위쪽 테두리 두께 설정
-        borderTopColor: '#53a3ec', },
-    infoText: { fontSize: 16, color: '#333' },
-    bottomBox: { flex: 2, backgroundColor: '#fff', padding: 15, borderRadius: 10 },
+    container: { flex: 1, padding: 20, backgroundColor: '#f0f5f9' },
+    titleBox: { paddingVertical: 15, backgroundColor: '#fff', marginBottom: 15, borderRadius: 10, alignItems: 'flex-start',  // 위쪽 테두리 두께 설정
+            marginHorizontal: 14,},
+    titleText: { fontSize: 24, fontWeight: '200', color: '#3b699e', marginLeft : 30, marginBottom : 10 },
+    topContainer: { flexDirection: 'row', justifyContent: 'space-between', margin : 10 },
+    bottomContainer : {flexDirection: 'row', justifyContent: 'space-between', margin : 10, marginTop:70},
+    box: { flex: 1, backgroundColor: '#fff', padding: 0, borderRadius: 10, alignItems: 'center', marginHorizontal: 7, paddingTop: 50, // 위쪽 테두리 두께 설정
+        },
+    
+    logoBox:{flex : 0.8, backgroundColor: '#fff', padding: 15, borderRadius: 10, alignItems: 'center', marginHorizontal: 7, paddingTop: 50, // 위쪽 테두리 두께 설정
+        },
+    infoBox: { flex: 1.5, backgroundColor: '#fff', borderRadius: 10, padding: 0, alignItems: 'center', marginHorizontal: 5, flexDirection:'row',  // 위쪽 테두리 두께 설정
+         },
+
+    bottomBox: { flex: 1, backgroundColor: '#fff', padding: 0, borderRadius: 10, alignItems: 'center', marginHorizontal: 7, paddingTop: 0, // 위쪽 테두리 두께 설정
+        },
     chartContainer: { marginRight: 20, alignItems: 'center' },
-    chartTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 5 },
-    chartStyle: { marginVertical: 8, borderRadius: 16 },
+    chartTitle: { fontSize: 20, fontWeight: '500', color: '#333', marginLeft:40 , marginTop:10, marginBottom:10, textAlign: 'left',  // 텍스트 왼쪽 정렬
+        width: '100%', },
+    
     labelStyle: { fontSize: 18, color: '#333' },
-    textContainer: {flexDirection:'column', alignItems:'flex-start', marginLeft:70},
+    textContainer: {flexDirection:'col', alignItems:'flex-start', marginLeft:40,},
     infoText: { 
-        fontSize: 30, 
-        fontWeight: 'bold',
-        color: '#02a361',
+        fontSize: 40, 
+        fontWeight: '400',
+        color: '#3b699e',
         marginVertical: 4, // 각 텍스트 간의 여백
       },
+    chartText : {fontSize: 40, 
+    fontWeight: '100',
+    color: '#3b699e',
+    marginVertical: 4, textAlign:'left',  width: '100%',marginLeft:40 ,},
+    infoTextPer : {
+        fontSize : 15,
+        fontWeight : 100,
+        color: '#3b699e',
+        
+    }
 });
